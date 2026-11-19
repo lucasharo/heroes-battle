@@ -1,0 +1,232 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-display: 'Barlow Condensed', system-ui, sans-serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  html,
+  body,
+  #root {
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    background-color: #0b111e;
+    color: #f1f5f9;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  canvas[data-testid='arena-canvas'] {
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes victoryBackdropFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes victorySunburstSpin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg) scale(0.92);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes victoryCardPop {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.92);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes victoryCrestDrop {
+  0% {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.76);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(2px) scale(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes victorySheenSweep {
+  0% {
+    transform: translateX(-140%) skewX(-20deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.75;
+  }
+  80% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translateX(260%) skewX(-20deg);
+    opacity: 0;
+  }
+}
+
+.animate-victory-backdrop {
+  animation: victoryBackdropFade 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-victory-sunburst {
+  animation: victorySunburstSpin 22s linear infinite;
+}
+
+.animate-victory-card {
+  animation: victoryCardPop 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-victory-crest {
+  animation: victoryCrestDrop 440ms cubic-bezier(0.16, 1, 0.3, 1) 80ms both;
+}
+
+.animate-victory-sheen {
+  animation: victorySheenSweep 1.25s cubic-bezier(0.16, 1, 0.3, 1) 180ms both;
+}
+
+@keyframes killStreakSlam {
+  0% {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.84);
+  }
+  58% {
+    opacity: 1;
+    transform: translateY(3px) scale(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-killstreak-slam {
+  animation: killStreakSlam 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes levelUpPop {
+  0% {
+    transform: scale(0.72);
+    opacity: 0.45;
+  }
+  52% {
+    transform: scale(1.24);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes levelUpSparkleTwinkle {
+  0%, 100% {
+    transform: scale(0.55) rotate(0deg);
+    opacity: 0.25;
+  }
+  50% {
+    transform: scale(1.18) rotate(45deg);
+    opacity: 1;
+  }
+}
+
+@keyframes levelUpHaloSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes levelUpRingPulse {
+  0% {
+    transform: scale(0.82);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1.48);
+    opacity: 0;
+  }
+}
+
+.animate-levelup-pop {
+  animation: levelUpPop 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-levelup-sparkle {
+  animation: levelUpSparkleTwinkle 1.45s ease-in-out infinite;
+}
+
+.animate-levelup-halo {
+  animation: levelUpHaloSpin 8s linear infinite;
+}
+
+.animate-levelup-ring {
+  animation: levelUpRingPulse 1.35s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-victory-backdrop,
+  .animate-victory-sunburst,
+  .animate-victory-card,
+  .animate-victory-crest,
+  .animate-victory-sheen,
+  .animate-killstreak-slam,
+  .animate-levelup-pop,
+  .animate-levelup-sparkle,
+  .animate-levelup-halo,
+  .animate-levelup-ring {
+    animation: none !important;
+  }
+}

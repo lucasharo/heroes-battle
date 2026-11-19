@@ -1,0 +1,615 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Private authenticated player account profile including email and progression stats.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID matching document ID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Player arena nickname displayed in leaderboards.",
+          "minLength": 2,
+          "maxLength": 24,
+          "pattern": "^[a-zA-Z0-9À-ÿ _\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Private user email address isolated to owner.",
+          "minLength": 0,
+          "maxLength": 160
+        },
+        "favoriteHero": {
+          "type": "string",
+          "description": "Currently selected HeroId for arena combat.",
+          "minLength": 2,
+          "maxLength": 24,
+          "pattern": "^[a-z0-9]+$"
+        },
+        "trophies": {
+          "type": "integer",
+          "description": "Total ranking trophies accumulated by the player."
+        },
+        "wins": {
+          "type": "integer",
+          "description": "Total arena victories."
+        },
+        "matches": {
+          "type": "integer",
+          "description": "Total matches played."
+        },
+        "kills": {
+          "type": "integer",
+          "description": "Total hero eliminations."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp."
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "email",
+        "favoriteHero",
+        "trophies",
+        "wins",
+        "matches",
+        "kills",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "RankingEntry": {
+      "title": "RankingEntry",
+      "description": "Public leaderboard ranking document containing zero PII.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID matching document ID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Public player nickname.",
+          "minLength": 2,
+          "maxLength": 24,
+          "pattern": "^[a-zA-Z0-9À-ÿ _\\-]+$"
+        },
+        "heroId": {
+          "type": "string",
+          "description": "Last or favorite HeroId badge.",
+          "minLength": 2,
+          "maxLength": 24,
+          "pattern": "^[a-z0-9]+$"
+        },
+        "trophies": {
+          "type": "integer",
+          "description": "Total ranking trophies for ordering."
+        },
+        "wins": {
+          "type": "integer",
+          "description": "Total arena victories."
+        },
+        "matches": {
+          "type": "integer",
+          "description": "Total matches completed."
+        },
+        "kills": {
+          "type": "integer",
+          "description": "Total eliminations."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp."
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "heroId",
+        "trophies",
+        "wins",
+        "matches",
+        "kills",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserProgressionWallet": {
+      "title": "UserProgressionWallet",
+      "description": "Private player XP and cosmetic currency (gems) wallet stored under user progression.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the owning player.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "xp": {
+          "type": "integer",
+          "description": "Total accumulated experience points."
+        },
+        "gems": {
+          "type": "integer",
+          "description": "Cosmetic currency (Gemas) balance earned from quests and daily login streaks."
+        },
+        "loginStreak": {
+          "type": "integer",
+          "description": "Consecutive daily login streak counter."
+        },
+        "lastLoginDateKey": {
+          "type": "string",
+          "description": "Calendar date key (YYYY-MM-DD) of the last awarded daily login streak.",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp."
+        }
+      },
+      "required": [
+        "uid",
+        "xp",
+        "gems",
+        "loginStreak",
+        "lastLoginDateKey",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "DailyQuestRecord": {
+      "title": "DailyQuestRecord",
+      "description": "Three daily quest challenges and progress for a specific calendar date.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the owning player.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "dateKey": {
+          "type": "string",
+          "description": "Calendar date key in YYYY-MM-DD format.",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "quests": {
+          "type": "array",
+          "description": "Bounded list of exactly 3 active daily quest progress objects."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp."
+        }
+      },
+      "required": [
+        "uid",
+        "dateKey",
+        "quests",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "MatchResult": {
+      "title": "MatchResult",
+      "description": "Immutable record of a completed arena match for a signed-in player.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the owning player.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "victory": {
+          "type": "boolean",
+          "description": "Whether the player won the match."
+        },
+        "heroId": {
+          "type": "string",
+          "description": "HeroId played during the match.",
+          "minLength": 2,
+          "maxLength": 24,
+          "pattern": "^[a-z0-9]+$"
+        },
+        "mode": {
+          "type": "string",
+          "description": "Game mode identifier.",
+          "enum": ["royale", "brawl", "superstar", "tower"],
+          "minLength": 4,
+          "maxLength": 12
+        },
+        "kills": {
+          "type": "integer",
+          "description": "Total eliminations scored by the player."
+        },
+        "placement": {
+          "type": "integer",
+          "description": "Final placement rank in the match."
+        },
+        "trophyDelta": {
+          "type": "integer",
+          "description": "Ranking trophies gained or lost in this match."
+        },
+        "playedAtMs": {
+          "type": "integer",
+          "description": "Epoch milliseconds timestamp when the match ended for single-field sorting."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        }
+      },
+      "required": [
+        "uid",
+        "victory",
+        "heroId",
+        "mode",
+        "kills",
+        "placement",
+        "trophyDelta",
+        "playedAtMs",
+        "createdAt"
+      ]
+    },
+    "HeroMasteryRecord": {
+      "title": "HeroMasteryRecord",
+      "description": "Per-hero mastery progression tracking matches played, kills, and equipped cosmetic portrait frame.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the owning player.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "heroId": {
+          "type": "string",
+          "description": "HeroId matching document ID.",
+          "minLength": 2,
+          "maxLength": 24,
+          "pattern": "^[a-z0-9]+$"
+        },
+        "matches": {
+          "type": "integer",
+          "description": "Total arena matches played with this hero."
+        },
+        "kills": {
+          "type": "integer",
+          "description": "Total eliminations achieved with this hero."
+        },
+        "bonusPoints": {
+          "type": "integer",
+          "description": "Optional bonus mastery points granted via Gem frame evolution upgrades."
+        },
+        "equippedFrame": {
+          "type": "string",
+          "description": "Selected cosmetic portrait frame preference ('auto' uses highest unlocked tier).",
+          "enum": ["auto", "recruta", "bronze", "prata", "ouro", "diamante", "lenda"],
+          "minLength": 4,
+          "maxLength": 10
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp."
+        }
+      },
+      "required": [
+        "uid",
+        "heroId",
+        "matches",
+        "kills",
+        "equippedFrame",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "HeroSkinRecord": {
+      "title": "HeroSkinRecord",
+      "description": "Per-hero equipped cosmetic visual skin variant owned by a signed-in player.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the owning player.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "heroId": {
+          "type": "string",
+          "description": "HeroId matching document ID.",
+          "minLength": 2,
+          "maxLength": 24,
+          "pattern": "^[a-z0-9]+$"
+        },
+        "equippedSkin": {
+          "type": "string",
+          "description": "Equipped cosmetic visual skin variant for this hero.",
+          "enum": ["classic", "chroma", "solar", "eclipse", "vanguard", "infernal", "celestial"],
+          "minLength": 5,
+          "maxLength": 9
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp."
+        }
+      },
+      "required": [
+        "uid",
+        "heroId",
+        "equippedSkin",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "BattlePassProgress": {
+      "title": "BattlePassProgress",
+      "description": "Seasonal Battle Pass XP, Elite unlock state, claimed tier arrays, and unlocked hero cosmetic tokens owned by a signed-in player.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the owning player.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "seasonId": {
+          "type": "string",
+          "description": "Season identifier matching document ID.",
+          "enum": ["season1"],
+          "minLength": 7,
+          "maxLength": 16
+        },
+        "seasonXp": {
+          "type": "integer",
+          "description": "Cumulative seasonal Battle Pass XP earned."
+        },
+        "premiumUnlocked": {
+          "type": "boolean",
+          "description": "Whether the Elite Battle Pass track has been unlocked."
+        },
+        "claimedFreeTiers": {
+          "type": "array",
+          "description": "Claimed Free track tier numbers (1..12).",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "claimedEliteTiers": {
+          "type": "array",
+          "description": "Claimed Elite track tier numbers (1..12).",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "unlockedCosmetics": {
+          "type": "array",
+          "description": "Cosmetic unlock tokens granted by claimed Battle Pass tiers (e.g. steelshot:vanguard or all:celestial).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp."
+        }
+      },
+      "required": [
+        "uid",
+        "seasonId",
+        "seasonXp",
+        "premiumUnlocked",
+        "claimedFreeTiers",
+        "claimedEliteTiers",
+        "unlockedCosmetics",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "HeroEvolutionRecord": {
+      "title": "HeroEvolutionRecord",
+      "description": "Per-hero account evolution tier (levels 2..5) synced atomically with progression Gem balance.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the owning player.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "heroId": {
+          "type": "string",
+          "description": "HeroId matching document ID.",
+          "minLength": 2,
+          "maxLength": 24,
+          "pattern": "^[a-z0-9]+$"
+        },
+        "level": {
+          "type": "integer",
+          "description": "Hero evolution level from 2 to 5 (level 1 is base default)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp."
+        }
+      },
+      "required": [
+        "uid",
+        "heroId",
+        "level",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AccountRedemption": {
+      "title": "AccountRedemption",
+      "description": "Immutable one-time account gift redemption record paired atomically with progression wallet Gem credit.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the owning player.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "giftId": {
+          "type": "string",
+          "description": "Redemption identifier matching document ID.",
+          "enum": ["season1_welcome_10k"],
+          "minLength": 19,
+          "maxLength": 24
+        },
+        "gemsGranted": {
+          "type": "integer",
+          "description": "Exact amount of Gems granted once by this redemption."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        }
+      },
+      "required": [
+        "uid",
+        "giftId",
+        "gemsGranted",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Private user accounts and PII email isolated strictly to the owning UID."
+    },
+    "/users/{userId}/progression/{docId}": {
+      "schema": {
+        "$ref": "#/entities/UserProgressionWallet"
+      },
+      "description": "Player XP and cosmetic currency wallet owned strictly by userId."
+    },
+    "/users/{userId}/dailyQuests/{dateKey}": {
+      "schema": {
+        "$ref": "#/entities/DailyQuestRecord"
+      },
+      "description": "Player's 3 daily challenges for a calendar date key owned strictly by userId."
+    },
+    "/users/{userId}/matches/{matchId}": {
+      "schema": {
+        "$ref": "#/entities/MatchResult"
+      },
+      "description": "Player's completed match history ordered by playedAtMs descending."
+    },
+    "/users/{userId}/heroMastery/{heroId}": {
+      "schema": {
+        "$ref": "#/entities/HeroMasteryRecord"
+      },
+      "description": "Per-hero mastery stats (matches, kills) and equipped cosmetic portrait frame owned strictly by userId."
+    },
+    "/users/{userId}/heroSkins/{heroId}": {
+      "schema": {
+        "$ref": "#/entities/HeroSkinRecord"
+      },
+      "description": "Per-hero equipped cosmetic skin variant owned strictly by userId."
+    },
+    "/users/{userId}/battlePass/{seasonId}": {
+      "schema": {
+        "$ref": "#/entities/BattlePassProgress"
+      },
+      "description": "Seasonal Battle Pass progression, claimed tier rewards, and unlocked cosmetic skins owned strictly by userId."
+    },
+    "/users/{userId}/heroEvolutions/{heroId}": {
+      "schema": {
+        "$ref": "#/entities/HeroEvolutionRecord"
+      },
+      "description": "Per-hero account evolution tier (2..5) owned strictly by userId and upgraded atomically with Gems."
+    },
+    "/users/{userId}/redemptions/{giftId}": {
+      "schema": {
+        "$ref": "#/entities/AccountRedemption"
+      },
+      "description": "Immutable one-time account gift redemptions (season1_welcome_10k) verified atomically against progression wallet."
+    },
+    "/rankings/{userId}": {
+      "schema": {
+        "$ref": "#/entities/RankingEntry"
+      },
+      "description": "Public leaderboard standings ordered by trophies descending without any PII."
+    }
+  }
+}

@@ -1,0 +1,1018 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidHeroId(heroId) {
+      return heroId is string && heroId.size() >= 2 && heroId.size() <= 24 && heroId.matches('^[a-z0-9]+$');
+    }
+
+    function isKnownHeroId(heroId) {
+      return heroId in [
+        'raidon', 'veinka', 'kong', 'phoenix', 'steelshot', 'eldragon', 'cluster',
+        'velvet', 'meiro', 'baston', 'nina', 'drake', 'knox', 'kairo',
+        'boulder', 'ryder', 'solara', 'frost', 'valkyria', 'kronos', 'titanx'
+      ];
+    }
+
+    function isValidDisplayName(name) {
+      return name is string && name.size() >= 2 && name.size() <= 24 && name.matches('^[a-zA-Z0-9À-ÿ _\\-]+$');
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll([
+        'uid',
+        'displayName',
+        'email',
+        'favoriteHero',
+        'trophies',
+        'wins',
+        'matches',
+        'kills',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'uid',
+        'displayName',
+        'email',
+        'favoriteHero',
+        'trophies',
+        'wins',
+        'matches',
+        'kills',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.uid is string
+      && data.uid == request.auth.uid
+      && data.uid == userId
+      && isValidDisplayName(data.displayName)
+      && data.email is string
+      && data.email.size() <= 160
+      && isValidHeroId(data.favoriteHero)
+      && data.trophies is int
+      && data.trophies >= 0
+      && data.trophies <= 1000000
+      && data.wins is int
+      && data.wins >= 0
+      && data.wins <= 100000
+      && data.matches is int
+      && data.matches >= 0
+      && data.matches <= 100000
+      && data.kills is int
+      && data.kills >= 0
+      && data.kills <= 1000000
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidRankingEntry(data, userId) {
+      return data.keys().hasAll([
+        'uid',
+        'displayName',
+        'heroId',
+        'trophies',
+        'wins',
+        'matches',
+        'kills',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'uid',
+        'displayName',
+        'heroId',
+        'trophies',
+        'wins',
+        'matches',
+        'kills',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.uid is string
+      && data.uid == request.auth.uid
+      && data.uid == userId
+      && isValidDisplayName(data.displayName)
+      && isValidHeroId(data.heroId)
+      && data.trophies is int
+      && data.trophies >= 0
+      && data.trophies <= 1000000
+      && data.wins is int
+      && data.wins >= 0
+      && data.wins <= 100000
+      && data.matches is int
+      && data.matches >= 0
+      && data.matches <= 100000
+      && data.kills is int
+      && data.kills >= 0
+      && data.kills <= 1000000
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isBoundedProgressionUpdate() {
+      return incoming().matches >= existing().matches
+        && incoming().matches <= existing().matches + 1
+        && incoming().wins >= existing().wins
+        && incoming().wins <= existing().wins + 1
+        && incoming().kills >= existing().kills
+        && incoming().kills <= existing().kills + 40
+        && incoming().trophies <= existing().trophies + 80;
+    }
+
+    function isValidDateKey(dateKey) {
+      return dateKey is string && dateKey.size() == 10 && dateKey.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    function isValidProgressionWallet(data, userId) {
+      return data.keys().hasAll([
+        'uid',
+        'xp',
+        'gems',
+        'loginStreak',
+        'lastLoginDateKey',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'uid',
+        'xp',
+        'gems',
+        'loginStreak',
+        'lastLoginDateKey',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.uid is string
+      && data.uid == request.auth.uid
+      && data.uid == userId
+      && data.xp is int
+      && data.xp >= 0
+      && data.xp <= 10000000
+      && data.gems is int
+      && data.gems >= 0
+      && data.gems <= 10000000
+      && data.loginStreak is int
+      && data.loginStreak >= 0
+      && data.loginStreak <= 36500
+      && ((data.lastLoginDateKey == null && data.loginStreak == 0)
+        || (isValidDateKey(data.lastLoginDateKey) && data.loginStreak >= 1))
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidDailyQuestElement(q) {
+      return q is map
+        && q.keys().hasAll([
+          'id',
+          'metric',
+          'title',
+          'description',
+          'target',
+          'progress',
+          'rewardXp',
+          'rewardGems',
+          'completed',
+          'claimed'
+        ])
+        && q.keys().hasOnly([
+          'id',
+          'metric',
+          'title',
+          'description',
+          'target',
+          'progress',
+          'rewardXp',
+          'rewardGems',
+          'completed',
+          'claimed'
+        ])
+        && q.id is string && q.id.size() >= 1 && q.id.size() <= 40
+        && q.metric is string && q.metric.size() >= 1 && q.metric.size() <= 32
+        && q.title is string && q.title.size() >= 1 && q.title.size() <= 64
+        && q.description is string && q.description.size() >= 1 && q.description.size() <= 160
+        && q.target is int && q.target >= 1 && q.target <= 100000
+        && q.progress is int && q.progress >= 0 && q.progress <= q.target
+        && q.rewardXp is int && q.rewardXp >= 0 && q.rewardXp <= 1000
+        && q.rewardGems is int && q.rewardGems >= 0 && q.rewardGems <= 500
+        && q.completed is bool
+        && q.claimed is bool;
+    }
+
+    function isValidDailyQuestRecord(data, userId, dateKey) {
+      return data.keys().hasAll([
+        'uid',
+        'dateKey',
+        'quests',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'uid',
+        'dateKey',
+        'quests',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.uid is string
+      && data.uid == request.auth.uid
+      && data.uid == userId
+      && isValidDateKey(data.dateKey)
+      && data.dateKey == dateKey
+      && data.quests is list
+      && data.quests.size() == 3
+      && isValidDailyQuestElement(data.quests[0])
+      && isValidDailyQuestElement(data.quests[1])
+      && isValidDailyQuestElement(data.quests[2])
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidGameMode(mode) {
+      return mode is string && mode.size() >= 4 && mode.size() <= 12 && mode in ['royale', 'brawl', 'superstar', 'tower'];
+    }
+
+    function isValidMatchResult(data, userId) {
+      return data.keys().hasAll([
+        'uid',
+        'victory',
+        'heroId',
+        'mode',
+        'kills',
+        'placement',
+        'trophyDelta',
+        'playedAtMs',
+        'createdAt'
+      ])
+      && data.keys().hasOnly([
+        'uid',
+        'victory',
+        'heroId',
+        'mode',
+        'kills',
+        'placement',
+        'trophyDelta',
+        'playedAtMs',
+        'createdAt'
+      ])
+      && data.uid is string
+      && data.uid.size() > 0
+      && data.uid.size() <= 128
+      && data.uid == request.auth.uid
+      && data.uid == userId
+      && data.victory is bool
+      && isValidHeroId(data.heroId)
+      && isValidGameMode(data.mode)
+      && data.kills is int
+      && data.kills >= 0
+      && data.kills <= 40
+      && data.placement is int
+      && data.placement >= 1
+      && data.placement <= 8
+      && data.trophyDelta is int
+      && data.trophyDelta >= -80
+      && data.trophyDelta <= 80
+      && data.playedAtMs is int
+      && data.playedAtMs >= 0
+      && data.playedAtMs <= 4102444800000
+      && data.createdAt is timestamp;
+    }
+
+    function getMasteryBonusPoints(data) {
+      return ('bonusPoints' in data && data.bonusPoints is int) ? data.bonusPoints : 0;
+    }
+
+    function isMasteryFrameUnlocked(frameId, matches, kills, bonusPoints) {
+      return frameId == 'auto'
+        || frameId == 'recruta'
+        || (frameId == 'bronze' && (matches * 40 + kills * 15 + bonusPoints) >= 60)
+        || (frameId == 'prata' && (matches * 40 + kills * 15 + bonusPoints) >= 180)
+        || (frameId == 'ouro' && (matches * 40 + kills * 15 + bonusPoints) >= 400)
+        || (frameId == 'diamante' && (matches * 40 + kills * 15 + bonusPoints) >= 750)
+        || (frameId == 'lenda' && (matches * 40 + kills * 15 + bonusPoints) >= 1250);
+    }
+
+    function isValidHeroMastery(data, userId, heroId) {
+      return data.keys().hasAll([
+        'uid',
+        'heroId',
+        'matches',
+        'kills',
+        'equippedFrame',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'uid',
+        'heroId',
+        'matches',
+        'kills',
+        'bonusPoints',
+        'equippedFrame',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.uid is string
+      && data.uid.size() > 0
+      && data.uid.size() <= 128
+      && data.uid == request.auth.uid
+      && data.uid == userId
+      && isValidHeroId(data.heroId)
+      && isKnownHeroId(data.heroId)
+      && data.heroId == heroId
+      && data.matches is int
+      && data.matches >= 0
+      && data.matches <= 100000
+      && data.kills is int
+      && data.kills >= 0
+      && data.kills <= 1000000
+      && (!('bonusPoints' in data) || (data.bonusPoints is int && data.bonusPoints >= 0 && data.bonusPoints <= 100000))
+      && data.equippedFrame is string
+      && data.equippedFrame.size() >= 4
+      && data.equippedFrame.size() <= 10
+      && data.equippedFrame in ['auto', 'recruta', 'bronze', 'prata', 'ouro', 'diamante', 'lenda']
+      && isMasteryFrameUnlocked(data.equippedFrame, data.matches, data.kills, getMasteryBonusPoints(data))
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidHeroSkinId(skinId) {
+      return skinId is string
+        && skinId.size() >= 5
+        && skinId.size() <= 9
+        && skinId in ['classic', 'chroma', 'solar', 'eclipse', 'vanguard', 'infernal', 'celestial'];
+    }
+
+    function isHeroSkinUnlocked(userId, heroId, skinId) {
+      return skinId == 'classic'
+        || skinId == 'chroma'
+        || (
+          exists(/databases/$(database)/documents/users/$(userId)/heroMastery/$(heroId))
+          && (
+            (skinId == 'solar'
+              && (get(/databases/$(database)/documents/users/$(userId)/heroMastery/$(heroId)).data.matches * 40
+                + get(/databases/$(database)/documents/users/$(userId)/heroMastery/$(heroId)).data.kills * 15
+                + getMasteryBonusPoints(get(/databases/$(database)/documents/users/$(userId)/heroMastery/$(heroId)).data)) >= 60)
+            || (skinId == 'eclipse'
+              && (get(/databases/$(database)/documents/users/$(userId)/heroMastery/$(heroId)).data.matches * 40
+                + get(/databases/$(database)/documents/users/$(userId)/heroMastery/$(heroId)).data.kills * 15
+                + getMasteryBonusPoints(get(/databases/$(database)/documents/users/$(userId)/heroMastery/$(heroId)).data)) >= 180)
+          )
+        )
+        || (
+          skinId in ['vanguard', 'infernal', 'celestial']
+          && exists(/databases/$(database)/documents/users/$(userId)/battlePass/season1)
+          && (
+            (heroId + ':' + skinId) in get(/databases/$(database)/documents/users/$(userId)/battlePass/season1).data.unlockedCosmetics
+            || ('all:' + skinId) in get(/databases/$(database)/documents/users/$(userId)/battlePass/season1).data.unlockedCosmetics
+          )
+        );
+    }
+
+    function isValidBattlePassProgress(data, userId, seasonId) {
+      return data.keys().hasAll([
+        'uid',
+        'seasonId',
+        'seasonXp',
+        'premiumUnlocked',
+        'claimedFreeTiers',
+        'claimedEliteTiers',
+        'unlockedCosmetics',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'uid',
+        'seasonId',
+        'seasonXp',
+        'premiumUnlocked',
+        'claimedFreeTiers',
+        'claimedEliteTiers',
+        'unlockedCosmetics',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.uid is string
+      && data.uid.size() > 0
+      && data.uid.size() <= 128
+      && data.uid == request.auth.uid
+      && data.uid == userId
+      && data.seasonId is string
+      && data.seasonId == seasonId
+      && data.seasonId == 'season1'
+      && data.seasonXp is int
+      && data.seasonXp >= 0
+      && data.seasonXp <= 100000
+      && data.premiumUnlocked is bool
+      && data.claimedFreeTiers is list
+      && data.claimedFreeTiers.size() <= 12
+      && (data.claimedFreeTiers.size() == 0 || data.claimedFreeTiers[0] is int)
+      && data.claimedEliteTiers is list
+      && data.claimedEliteTiers.size() <= 12
+      && (data.claimedEliteTiers.size() == 0 || data.claimedEliteTiers[0] is int)
+      && data.unlockedCosmetics is list
+      && data.unlockedCosmetics.size() <= 40
+      && (data.unlockedCosmetics.size() == 0
+        || (data.unlockedCosmetics[0] is string
+          && data.unlockedCosmetics[0].size() >= 6
+          && data.unlockedCosmetics[0].size() <= 28))
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidHeroSkinRecord(data, userId, heroId) {
+      return data.keys().hasAll([
+        'uid',
+        'heroId',
+        'equippedSkin',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'uid',
+        'heroId',
+        'equippedSkin',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.uid is string
+      && data.uid.size() > 0
+      && data.uid.size() <= 128
+      && data.uid == request.auth.uid
+      && data.uid == userId
+      && isValidHeroId(data.heroId)
+      && isKnownHeroId(data.heroId)
+      && data.heroId == heroId
+      && isValidHeroSkinId(data.equippedSkin)
+      && isHeroSkinUnlocked(userId, heroId, data.equippedSkin)
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function evolutionUpgradeCost(fromLevel) {
+      return fromLevel == 1
+        ? 25
+        : (fromLevel == 2
+          ? 45
+          : (fromLevel == 3
+            ? 75
+            : (fromLevel == 4 ? 110 : 999999)));
+    }
+
+    function isValidHeroEvolution(data, userId, heroId) {
+      return data.keys().hasAll([
+        'uid',
+        'heroId',
+        'level',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'uid',
+        'heroId',
+        'level',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.uid is string
+      && data.uid.size() > 0
+      && data.uid.size() <= 128
+      && data.uid == request.auth.uid
+      && data.uid == userId
+      && isValidHeroId(data.heroId)
+      && isKnownHeroId(data.heroId)
+      && data.heroId == heroId
+      && data.level is int
+      && data.level >= 2
+      && data.level <= 5
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidAccountRedemption(data, userId, giftId) {
+      return data.keys().hasAll([
+        'uid',
+        'giftId',
+        'gemsGranted',
+        'createdAt'
+      ])
+      && data.keys().hasOnly([
+        'uid',
+        'giftId',
+        'gemsGranted',
+        'createdAt'
+      ])
+      && data.uid is string
+      && data.uid.size() > 0
+      && data.uid.size() <= 128
+      && data.uid == request.auth.uid
+      && data.uid == userId
+      && data.giftId is string
+      && data.giftId.size() >= 19
+      && data.giftId.size() <= 24
+      && data.giftId == giftId
+      && data.giftId == 'season1_welcome_10k'
+      && data.gemsGranted is int
+      && data.gemsGranted == 10000
+      && data.createdAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+      allow list: if false;
+      allow create: if isSignedIn()
+        && isValidId(userId)
+        && request.auth.uid == userId
+        && isValidUserProfile(incoming(), userId)
+        && incoming().trophies == 0
+        && incoming().wins == 0
+        && incoming().matches == 0
+        && incoming().kills == 0
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isSignedIn()
+        && isValidId(userId)
+        && request.auth.uid == userId
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isBoundedProgressionUpdate()
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName',
+          'favoriteHero',
+          'trophies',
+          'wins',
+          'matches',
+          'kills',
+          'updatedAt'
+        ]);
+      allow delete: if false;
+
+      match /progression/{docId} {
+        allow get: if isSignedIn()
+          && isValidId(userId)
+          && docId == 'wallet'
+          && request.auth.uid == userId
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow list: if false;
+        allow create: if isSignedIn()
+          && isValidId(userId)
+          && docId == 'wallet'
+          && request.auth.uid == userId
+          && isValidProgressionWallet(incoming(), userId)
+          && incoming().xp <= 1000
+          && incoming().gems <= 560
+          && incoming().loginStreak <= 1
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow update: if isSignedIn()
+          && isValidId(userId)
+          && docId == 'wallet'
+          && request.auth.uid == userId
+          && isValidProgressionWallet(incoming(), userId)
+          && incoming().uid == existing().uid
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().xp >= existing().xp
+          && incoming().xp <= existing().xp + 1000
+          && (
+            (
+              incoming().gems >= existing().gems
+              && incoming().gems <= existing().gems + 560
+            )
+            || (
+              incoming().gems >= existing().gems
+              && incoming().gems <= existing().gems + 1200
+              && existsAfter(/databases/$(database)/documents/users/$(userId)/battlePass/season1)
+              && (
+                !exists(/databases/$(database)/documents/users/$(userId)/battlePass/season1)
+                || getAfter(/databases/$(database)/documents/users/$(userId)/battlePass/season1).data.claimedFreeTiers.size()
+                  > get(/databases/$(database)/documents/users/$(userId)/battlePass/season1).data.claimedFreeTiers.size()
+                || getAfter(/databases/$(database)/documents/users/$(userId)/battlePass/season1).data.claimedEliteTiers.size()
+                  > get(/databases/$(database)/documents/users/$(userId)/battlePass/season1).data.claimedEliteTiers.size()
+              )
+            )
+            || (
+              existing().gems >= 250
+              && incoming().gems == existing().gems - 250
+              && existsAfter(/databases/$(database)/documents/users/$(userId)/battlePass/season1)
+              && getAfter(/databases/$(database)/documents/users/$(userId)/battlePass/season1).data.premiumUnlocked == true
+              && (
+                !exists(/databases/$(database)/documents/users/$(userId)/battlePass/season1)
+                || get(/databases/$(database)/documents/users/$(userId)/battlePass/season1).data.premiumUnlocked == false
+              )
+            )
+            || (
+              existing().gems >= 25
+              && incoming().gems >= 0
+              && incoming().gems <= existing().gems - 25
+              && incoming().xp == existing().xp
+            )
+            || (
+              incoming().gems == existing().gems + 10000
+              && incoming().xp == existing().xp
+              && !exists(/databases/$(database)/documents/users/$(userId)/redemptions/season1_welcome_10k)
+              && existsAfter(/databases/$(database)/documents/users/$(userId)/redemptions/season1_welcome_10k)
+            )
+          )
+          && (
+            !('loginStreak' in existing())
+            || incoming().loginStreak == 1
+            || (incoming().loginStreak >= existing().loginStreak
+              && incoming().loginStreak <= existing().loginStreak + 1)
+          )
+          && (
+            !('lastLoginDateKey' in existing())
+            || incoming().lastLoginDateKey != existing().lastLoginDateKey
+            || incoming().loginStreak == existing().loginStreak
+          )
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'xp',
+            'gems',
+            'loginStreak',
+            'lastLoginDateKey',
+            'updatedAt'
+          ])
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow delete: if false;
+      }
+
+      match /dailyQuests/{dateKey} {
+        allow get: if isSignedIn()
+          && isValidId(userId)
+          && isValidDateKey(dateKey)
+          && request.auth.uid == userId
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow list: if false;
+        allow create: if isSignedIn()
+          && isValidId(userId)
+          && isValidDateKey(dateKey)
+          && request.auth.uid == userId
+          && isValidDailyQuestRecord(incoming(), userId, dateKey)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow update: if isSignedIn()
+          && isValidId(userId)
+          && isValidDateKey(dateKey)
+          && request.auth.uid == userId
+          && isValidDailyQuestRecord(incoming(), userId, dateKey)
+          && incoming().uid == existing().uid
+          && incoming().dateKey == existing().dateKey
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'quests',
+            'updatedAt'
+          ])
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow delete: if false;
+      }
+
+      match /matches/{matchId} {
+        allow get: if isSignedIn()
+          && isValidId(userId)
+          && isValidId(matchId)
+          && request.auth.uid == userId
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow list: if isSignedIn()
+          && isValidId(userId)
+          && request.auth.uid == userId
+          && resource.data.playedAtMs >= 0
+          && request.query.limit != null
+          && request.query.limit <= 20;
+        allow create: if isSignedIn()
+          && isValidId(userId)
+          && isValidId(matchId)
+          && request.auth.uid == userId
+          && isValidMatchResult(incoming(), userId)
+          && incoming().createdAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow update: if false;
+        allow delete: if false;
+      }
+
+      match /heroMastery/{heroId} {
+        allow get: if isSignedIn()
+          && isValidId(userId)
+          && isValidHeroId(heroId)
+          && request.auth.uid == userId
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow list: if isSignedIn()
+          && isValidId(userId)
+          && request.auth.uid == userId
+          && resource.data.uid == request.auth.uid
+          && request.query.limit != null
+          && request.query.limit <= 30;
+        allow create: if isSignedIn()
+          && isValidId(userId)
+          && isValidHeroId(heroId)
+          && isKnownHeroId(heroId)
+          && request.auth.uid == userId
+          && isValidHeroMastery(incoming(), userId, heroId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && (
+            (
+              incoming().matches <= 1
+              && incoming().kills >= 0
+              && incoming().kills <= 40
+              && getMasteryBonusPoints(incoming()) == 0
+            )
+            || (
+              incoming().matches == 0
+              && incoming().kills == 0
+              && getMasteryBonusPoints(incoming()) >= 60
+              && getMasteryBonusPoints(incoming()) <= 1250
+              && exists(/databases/$(database)/documents/users/$(userId)/progression/wallet)
+              && existsAfter(/databases/$(database)/documents/users/$(userId)/progression/wallet)
+              && get(/databases/$(database)/documents/users/$(userId)/progression/wallet).data.gems >= 25
+              && getAfter(/databases/$(database)/documents/users/$(userId)/progression/wallet).data.gems
+                <= get(/databases/$(database)/documents/users/$(userId)/progression/wallet).data.gems - 25
+            )
+          )
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow update: if isSignedIn()
+          && isValidId(userId)
+          && isValidHeroId(heroId)
+          && isKnownHeroId(heroId)
+          && request.auth.uid == userId
+          && isValidHeroMastery(incoming(), userId, heroId)
+          && incoming().uid == existing().uid
+          && incoming().heroId == existing().heroId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            (
+              incoming().matches >= existing().matches
+              && incoming().matches <= existing().matches + 1
+              && incoming().kills >= existing().kills
+              && incoming().kills <= existing().kills + 40
+              && getMasteryBonusPoints(incoming()) == getMasteryBonusPoints(existing())
+              && incoming().diff(existing()).affectedKeys().hasOnly([
+                'matches',
+                'kills',
+                'equippedFrame',
+                'updatedAt'
+              ])
+            )
+            || (
+              incoming().matches == existing().matches
+              && incoming().kills == existing().kills
+              && getMasteryBonusPoints(incoming()) == getMasteryBonusPoints(existing())
+              && incoming().diff(existing()).affectedKeys().hasOnly([
+                'equippedFrame',
+                'updatedAt'
+              ])
+            )
+            || (
+              incoming().matches == existing().matches
+              && incoming().kills == existing().kills
+              && incoming().bonusPoints is int
+              && incoming().bonusPoints > getMasteryBonusPoints(existing())
+              && incoming().bonusPoints <= getMasteryBonusPoints(existing()) + 1250
+              && incoming().diff(existing()).affectedKeys().hasOnly([
+                'bonusPoints',
+                'equippedFrame',
+                'updatedAt'
+              ])
+              && exists(/databases/$(database)/documents/users/$(userId)/progression/wallet)
+              && existsAfter(/databases/$(database)/documents/users/$(userId)/progression/wallet)
+              && get(/databases/$(database)/documents/users/$(userId)/progression/wallet).data.gems >= 25
+              && getAfter(/databases/$(database)/documents/users/$(userId)/progression/wallet).data.gems
+                <= get(/databases/$(database)/documents/users/$(userId)/progression/wallet).data.gems - 25
+            )
+          )
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow delete: if false;
+      }
+
+      match /heroSkins/{heroId} {
+        allow get: if isSignedIn()
+          && isValidId(userId)
+          && isValidHeroId(heroId)
+          && request.auth.uid == userId
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow list: if isSignedIn()
+          && isValidId(userId)
+          && request.auth.uid == userId
+          && resource.data.uid == request.auth.uid
+          && request.query.limit != null
+          && request.query.limit <= 30;
+        allow create: if isSignedIn()
+          && isValidId(userId)
+          && isValidHeroId(heroId)
+          && isKnownHeroId(heroId)
+          && request.auth.uid == userId
+          && isValidHeroSkinRecord(incoming(), userId, heroId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow update: if isSignedIn()
+          && isValidId(userId)
+          && isValidHeroId(heroId)
+          && isKnownHeroId(heroId)
+          && request.auth.uid == userId
+          && isValidHeroSkinRecord(incoming(), userId, heroId)
+          && incoming().uid == existing().uid
+          && incoming().heroId == existing().heroId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'equippedSkin',
+            'updatedAt'
+          ])
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow delete: if false;
+      }
+
+      match /battlePass/{seasonId} {
+        allow get: if isSignedIn()
+          && isValidId(userId)
+          && seasonId == 'season1'
+          && request.auth.uid == userId
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow list: if false;
+        allow create: if isSignedIn()
+          && isValidId(userId)
+          && seasonId == 'season1'
+          && request.auth.uid == userId
+          && isValidBattlePassProgress(incoming(), userId, seasonId)
+          && incoming().seasonXp <= 400
+          && incoming().premiumUnlocked == false
+          && incoming().claimedFreeTiers.size() == 0
+          && incoming().claimedEliteTiers.size() == 0
+          && incoming().unlockedCosmetics.size() == 0
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow update: if isSignedIn()
+          && isValidId(userId)
+          && seasonId == 'season1'
+          && request.auth.uid == userId
+          && isValidBattlePassProgress(incoming(), userId, seasonId)
+          && incoming().uid == existing().uid
+          && incoming().seasonId == existing().seasonId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().seasonXp >= existing().seasonXp
+          && incoming().seasonXp <= existing().seasonXp + 400
+          && incoming().claimedFreeTiers.size() >= existing().claimedFreeTiers.size()
+          && incoming().claimedEliteTiers.size() >= existing().claimedEliteTiers.size()
+          && incoming().unlockedCosmetics.size() >= existing().unlockedCosmetics.size()
+          && (
+            incoming().premiumUnlocked == existing().premiumUnlocked
+            || (
+              existing().premiumUnlocked == false
+              && incoming().premiumUnlocked == true
+              && exists(/databases/$(database)/documents/users/$(userId)/progression/wallet)
+              && get(/databases/$(database)/documents/users/$(userId)/progression/wallet).data.gems >= 250
+              && getAfter(/databases/$(database)/documents/users/$(userId)/progression/wallet).data.gems
+                == get(/databases/$(database)/documents/users/$(userId)/progression/wallet).data.gems - 250
+            )
+          )
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'seasonXp',
+            'premiumUnlocked',
+            'claimedFreeTiers',
+            'claimedEliteTiers',
+            'unlockedCosmetics',
+            'updatedAt'
+          ])
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow delete: if false;
+      }
+
+      match /heroEvolutions/{heroId} {
+        allow get: if isSignedIn()
+          && isValidId(userId)
+          && isValidHeroId(heroId)
+          && request.auth.uid == userId
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow list: if isSignedIn()
+          && isValidId(userId)
+          && request.auth.uid == userId
+          && resource.data.uid == request.auth.uid
+          && request.query.limit != null
+          && request.query.limit <= 30;
+        allow create: if isSignedIn()
+          && isValidId(userId)
+          && isValidHeroId(heroId)
+          && isKnownHeroId(heroId)
+          && request.auth.uid == userId
+          && isValidHeroEvolution(incoming(), userId, heroId)
+          && incoming().level == 2
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && exists(/databases/$(database)/documents/users/$(userId)/progression/wallet)
+          && existsAfter(/databases/$(database)/documents/users/$(userId)/progression/wallet)
+          && get(/databases/$(database)/documents/users/$(userId)/progression/wallet).data.gems >= 25
+          && getAfter(/databases/$(database)/documents/users/$(userId)/progression/wallet).data.gems
+            <= get(/databases/$(database)/documents/users/$(userId)/progression/wallet).data.gems - 25;
+        allow update: if isSignedIn()
+          && isValidId(userId)
+          && isValidHeroId(heroId)
+          && isKnownHeroId(heroId)
+          && request.auth.uid == userId
+          && isValidHeroEvolution(incoming(), userId, heroId)
+          && incoming().uid == existing().uid
+          && incoming().heroId == existing().heroId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().level == existing().level + 1
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'level',
+            'updatedAt'
+          ])
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && exists(/databases/$(database)/documents/users/$(userId)/progression/wallet)
+          && existsAfter(/databases/$(database)/documents/users/$(userId)/progression/wallet)
+          && get(/databases/$(database)/documents/users/$(userId)/progression/wallet).data.gems
+            >= evolutionUpgradeCost(existing().level)
+          && getAfter(/databases/$(database)/documents/users/$(userId)/progression/wallet).data.gems
+            <= get(/databases/$(database)/documents/users/$(userId)/progression/wallet).data.gems
+              - evolutionUpgradeCost(existing().level);
+        allow delete: if false;
+      }
+
+      match /redemptions/{giftId} {
+        allow get: if isSignedIn()
+          && isValidId(userId)
+          && giftId == 'season1_welcome_10k'
+          && request.auth.uid == userId
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow list: if false;
+        allow create: if isSignedIn()
+          && isValidId(userId)
+          && giftId == 'season1_welcome_10k'
+          && request.auth.uid == userId
+          && isValidAccountRedemption(incoming(), userId, giftId)
+          && incoming().createdAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && exists(/databases/$(database)/documents/users/$(userId)/progression/wallet)
+          && existsAfter(/databases/$(database)/documents/users/$(userId)/progression/wallet)
+          && getAfter(/databases/$(database)/documents/users/$(userId)/progression/wallet).data.gems
+            == get(/databases/$(database)/documents/users/$(userId)/progression/wallet).data.gems + 10000;
+        allow update: if false;
+        allow delete: if false;
+      }
+    }
+
+    match /rankings/{userId} {
+      allow get: if isValidId(userId) && (resource == null || resource.data.trophies >= 0);
+      allow list: if resource.data.trophies >= 0
+        && request.query.limit != null
+        && request.query.limit <= 50;
+      allow create: if isSignedIn()
+        && isValidId(userId)
+        && request.auth.uid == userId
+        && isValidRankingEntry(incoming(), userId)
+        && incoming().trophies == 0
+        && incoming().wins == 0
+        && incoming().matches == 0
+        && incoming().kills == 0
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isSignedIn()
+        && isValidId(userId)
+        && request.auth.uid == userId
+        && isValidRankingEntry(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isBoundedProgressionUpdate()
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName',
+          'heroId',
+          'trophies',
+          'wins',
+          'matches',
+          'kills',
+          'updatedAt'
+        ]);
+      allow delete: if false;
+    }
+  }
+}

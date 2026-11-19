@@ -1,0 +1,6 @@
+{
+  "name": "Thetan Arena: Batalha de Heróis",
+  "description": "Arena MOBA e Battle Royale 2D inspirada em Thetan Arena com 4 heróis jogáveis: Raidon, Veinka, Kong e Phoenix.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
